@@ -1,4 +1,4 @@
-module CS2VoiceData
+module github.com/DiskMethod/cs2-voice-tools
 
 go 1.23
 
