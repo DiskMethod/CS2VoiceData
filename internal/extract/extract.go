@@ -14,11 +14,17 @@ import (
 	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/msgs2"
 )
 
+// Default audio parameters for decoding CS2 demo voice data.
 const (
+	// defaultSteamSampleRate is the sample rate (Hz) for Steam-format voice data.
 	defaultSteamSampleRate = 24000
+	// defaultOpusSampleRate is the sample rate (Hz) for Opus-format voice data.
 	defaultOpusSampleRate  = 48000
+	// defaultNumChannels is the number of audio channels (mono audio).
 	defaultNumChannels     = 1
+	// defaultBitDepth is the bit depth for output WAV files.
 	defaultBitDepth        = 32
+	// intPCMMaxValue is the maximum integer value for PCM normalization.
 	intPCMMaxValue         = 2147483647
 )
 
