@@ -1,7 +1,7 @@
 package extract
 
 import (
-	"CS2VoiceData/internal/decoder"
+	"github.com/DiskMethod/cs2-voice-tools/internal/decoder"
 	"errors"
 	"fmt"
 	"log"

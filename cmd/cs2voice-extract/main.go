@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"CS2VoiceData/internal/extract"
+	"github.com/DiskMethod/cs2-voice-tools/internal/extract"
 )
 
 func main() {
