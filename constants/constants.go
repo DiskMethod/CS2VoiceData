@@ -2,6 +2,7 @@
 // These constants are shared across the main logic and decoder package to avoid magic numbers.
 //
 // See: https://zhenyangli.me/posts/reversing-steam-voice-codec/
+// Package constants centralizes protocol and audio configuration constants for the CS2 voice data tool.
 package constants
 
 const (

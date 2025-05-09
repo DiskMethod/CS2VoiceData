@@ -1,3 +1,5 @@
+// Package main implements the CS2 voice data extraction tool.
+// It parses CS2 demo files and extracts player voice communications into WAV files.
 package main
 
 import (
@@ -15,6 +17,8 @@ import (
 	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/msgs2"
 )
 
+// main is the entry point for the CS2 voice data extraction tool.
+// It parses command-line arguments, processes the demo file, and writes WAV files for each player's voice data.
 func main() {
 	// Use a command-line flag for the demo file path for Go idiomatic CLI behavior
 	demoPath := flag.String("demo", "", "Path to the unzipped CS2 demo file")
@@ -69,6 +73,8 @@ func main() {
 	defer parser.Close()
 }
 
+// convertAudioDataToWavFiles decodes Steam-format voice data payloads and writes them to a WAV file.
+// It uses the Opus decoder for each chunk and encodes the PCM output as a WAV file.
 func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 	// This sample rate can be set using data from the VoiceData net message.
 	// But every demo processed has used 24000 and is single channel.
@@ -131,6 +137,8 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 	enc.Close()
 }
 
+// opusToWav decodes Opus-format voice data and writes the result to a WAV file.
+// Returns an error if decoding or file writing fails.
 func opusToWav(data [][]byte, wavName string) (err error) {
 	opusDecoder, err := decoder.NewDecoder(constants.DefaultOpusSampleRate, constants.DefaultNumChannels)
 	if err != nil {
