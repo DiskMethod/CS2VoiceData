@@ -61,7 +61,7 @@ func main() {
 		if format == "VOICEDATA_FORMAT_OPUS" {
 			err = opusToWav(voiceData, wavFilePath)
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
 				continue
 			}
 
@@ -81,7 +81,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 	voiceDecoder, err := decoder.NewOpusDecoder(constants.DefaultSteamSampleRate, constants.DefaultNumChannels)
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
 	}
 
 	o := make([]int, 0, 1024)
@@ -90,7 +90,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 		c, err := decoder.DecodeChunk(payload)
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
 		}
 
 		// Not silent frame
@@ -98,13 +98,13 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 			pcm, err := voiceDecoder.Decode(c.Data)
 
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
 			}
 
 			converted := make([]int, len(pcm))
 			for i, v := range pcm {
 				// Float32 buffer implementation is wrong in go-audio, so we have to convert to int before encoding
-				converted[i] = int(v * constants.IntPCMMaxValue)
+				converted[i] = int(v * constants.IntPCMMaxValue) // no error here, just conversion
 			}
 
 			o = append(o, converted...)
@@ -114,7 +114,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 	outFile, err := os.Create(fileName)
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
 	}
 	defer outFile.Close()
 
@@ -131,7 +131,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 
 	// Write voice data to the file.
 	if err := enc.Write(buf); err != nil {
-		fmt.Println(err)
+		fmt.Printf("failed to write WAV data: %v\n", err)
 	}
 
 	enc.Close()
@@ -150,7 +150,7 @@ func opusToWav(data [][]byte, wavName string) (err error) {
 	for _, d := range data {
 		pcm, err := decoder.Decode(opusDecoder, d)
 		if err != nil {
-			log.Println(err)
+			log.Printf("failed to decode Opus data: %v", err)
 			continue
 		}
 
