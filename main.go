@@ -1,6 +1,7 @@
 package main
 
 import (
+	"CS2VoiceData/constants"
 	"CS2VoiceData/decoder"
 	"flag"
 	"fmt"
@@ -71,7 +72,7 @@ func main() {
 func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 	// This sample rate can be set using data from the VoiceData net message.
 	// But every demo processed has used 24000 and is single channel.
-	voiceDecoder, err := decoder.NewOpusDecoder(24000, 1)
+	voiceDecoder, err := decoder.NewOpusDecoder(constants.DefaultSteamSampleRate, constants.DefaultNumChannels)
 
 	if err != nil {
 		fmt.Println(err)
@@ -97,7 +98,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 			converted := make([]int, len(pcm))
 			for i, v := range pcm {
 				// Float32 buffer implementation is wrong in go-audio, so we have to convert to int before encoding
-				converted[i] = int(v * 2147483647)
+				converted[i] = int(v * constants.IntPCMMaxValue)
 			}
 
 			o = append(o, converted...)
@@ -112,13 +113,13 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 	defer outFile.Close()
 
 	// Encode new wav file, from decoded opus data.
-	enc := wav.NewEncoder(outFile, 24000, 32, 1, 1)
+	enc := wav.NewEncoder(outFile, constants.DefaultSteamSampleRate, constants.DefaultBitDepth, constants.DefaultNumChannels, 1)
 
 	buf := &audio.IntBuffer{
 		Data: o,
 		Format: &audio.Format{
-			SampleRate:  24000,
-			NumChannels: 1,
+			SampleRate:  constants.DefaultSteamSampleRate,
+			NumChannels: constants.DefaultNumChannels,
 		},
 	}
 
@@ -131,7 +132,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 }
 
 func opusToWav(data [][]byte, wavName string) (err error) {
-	opusDecoder, err := decoder.NewDecoder(48000, 1)
+	opusDecoder, err := decoder.NewDecoder(constants.DefaultOpusSampleRate, constants.DefaultNumChannels)
 	if err != nil {
 		return
 	}
@@ -148,7 +149,7 @@ func opusToWav(data [][]byte, wavName string) (err error) {
 		pp := make([]int, len(pcm))
 
 		for i, p := range pcm {
-			pp[i] = int(p * 2147483647)
+			pp[i] = int(p * constants.IntPCMMaxValue)
 		}
 
 		pcmBuffer = append(pcmBuffer, pp...)
@@ -160,14 +161,14 @@ func opusToWav(data [][]byte, wavName string) (err error) {
 	}
 	defer file.Close()
 
-	enc := wav.NewEncoder(file, 48000, 32, 1, 1)
+	enc := wav.NewEncoder(file, constants.DefaultOpusSampleRate, constants.DefaultBitDepth, constants.DefaultNumChannels, 1)
 	defer enc.Close()
 
 	buffer := &audio.IntBuffer{
 		Data: pcmBuffer,
 		Format: &audio.Format{
-			SampleRate:  48000,
-			NumChannels: 1,
+			SampleRate:  constants.DefaultOpusSampleRate,
+			NumChannels: constants.DefaultNumChannels,
 		},
 	}
 
