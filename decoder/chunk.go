@@ -8,8 +8,20 @@ import (
 	"hash/crc32"
 )
 
+// minimumLength is the smallest possible size of a valid voice data packet.
+// This is based on the observed structure from reverse engineering the Steam voice codec.
+// See: https://zhenyangli.me/posts/reversing-steam-voice-codec/
 const (
 	minimumLength = 18
+
+	// PayloadTypeHeader is the expected value for the payload type byte that indicates Steam voice packet header
+	PayloadTypeHeader = 0x0B
+
+	// VoiceTypeOpusPLC is the value for the voiceType byte indicating Opus PLC encoded voice data
+	VoiceTypeOpusPLC = 0x06
+
+	// VoiceTypeSilence is the value for the voiceType byte indicating silence
+	VoiceTypeSilence = 0x00
 )
 
 var (
@@ -26,6 +38,19 @@ type Chunk struct {
 	Checksum   uint32
 }
 
+// DecodeChunk parses a raw voice data packet from a CS2 demo file.
+//
+// Packet structure (see blog for details):
+// [u64 steamID][u8 payloadType=0x0B][u16 sampleRate][u8 voiceType][u16 length][voice data][u32 crc32]
+// - steamID: Little-endian 64-bit Steam ID of the player
+// - payloadType: Always 0x0B for Steam voice packets (see PayloadTypeHeader)
+// - sampleRate: Audio sample rate (typically 24000, see reverse engineering)
+// - voiceType: 0x06 for Opus PLC data, 0x00 for silence
+// - length: Length of the following voice data
+// - voice data: Opus PLC encoded data (if voiceType==0x06)
+// - crc32: CRC32 checksum of all previous bytes
+//
+// For more details, see: https://zhenyangli.me/posts/reversing-steam-voice-codec/
 func DecodeChunk(b []byte) (*Chunk, error) {
 	bLen := len(b)
 
@@ -46,8 +71,9 @@ func DecodeChunk(b []byte) (*Chunk, error) {
 		return nil, err
 	}
 
-	if payloadType != 0x0B {
-		return nil, fmt.Errorf("%w (received %x, expected %x)", ErrInvalidVoicePacket, payloadType, 0x0B)
+	// PayloadTypeHeader (0x0B) is always expected for Steam voice packets
+	if payloadType != PayloadTypeHeader {
+		return nil, fmt.Errorf("%w (received %x, expected %x)", ErrInvalidVoicePacket, payloadType, PayloadTypeHeader)
 	}
 
 	if err := binary.Read(buf, binary.LittleEndian, &chunk.SampleRate); err != nil {
@@ -64,7 +90,8 @@ func DecodeChunk(b []byte) (*Chunk, error) {
 	}
 
 	switch voiceType {
-	case 0x6:
+	case VoiceTypeOpusPLC:
+		// Opus PLC encoded voice data
 		remaining := buf.Len()
 		chunkLen := int(chunk.Length)
 
@@ -79,15 +106,15 @@ func DecodeChunk(b []byte) (*Chunk, error) {
 			return nil, err
 		}
 
-		// Is this even possible
 		if n != chunkLen {
 			return nil, fmt.Errorf("%w (expected to read %d bytes, but read %d bytes)", ErrInsufficientData, chunkLen, n)
 		}
 
 		chunk.Data = data
-	case 0x0:
-		// no-op, detect silence if chunk.Data is empty
-		// the length would the number of silence frames
+	case VoiceTypeSilence:
+		// Silence frame (no data)
+		// The length field is the number of silence frames
+		// chunk.Data remains empty
 	default:
 		return nil, fmt.Errorf("%w (expected 0x6 or 0x0 voice data, received %x)", ErrInvalidVoicePacket, voiceType)
 	}
