@@ -4,6 +4,7 @@ package main
 
 import (
 	"CS2VoiceData/decoder"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -16,7 +17,6 @@ import (
 	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/msgs2"
 )
 
-
 const (
 	defaultSteamSampleRate = 24000
 	defaultOpusSampleRate  = 48000
@@ -24,7 +24,6 @@ const (
 	defaultBitDepth        = 32
 	intPCMMaxValue         = 2147483647
 )
-
 
 // main is the entry point for the CS2 voice data extraction tool.
 // It parses command-line arguments, processes the demo file, and writes WAV files for each player's voice data.
@@ -63,6 +62,15 @@ func main() {
 
 	// Parse the full demo file.
 	err = parser.ParseToEnd()
+	if errors.Is(err, dem.ErrCancelled) {
+		log.Println("Parsing was cancelled.")
+	} else if errors.Is(err, dem.ErrUnexpectedEndOfDemo) {
+		log.Println("Demo file ended unexpectedly (may be corrupt).")
+	} else if errors.Is(err, dem.ErrInvalidFileType) {
+		log.Println("Invalid demo file type.")
+	} else if err != nil {
+		log.Printf("Unknown error parsing demo: %v", err)
+	}
 
 	// For each users data, create a wav file containing their voice comms.
 	for playerId, voiceData := range voiceDataPerPlayer {
