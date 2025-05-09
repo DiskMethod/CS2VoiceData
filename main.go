@@ -66,7 +66,10 @@ func main() {
 			}
 
 		} else if format == "VOICEDATA_FORMAT_STEAM" {
-			convertAudioDataToWavFiles(voiceData, wavFilePath)
+			err = convertAudioDataToWavFiles(voiceData, wavFilePath)
+			if err != nil {
+				log.Printf("failed to write wav for player %s: %v", playerId, err)
+			}
 		}
 	}
 
@@ -75,30 +78,29 @@ func main() {
 
 // convertAudioDataToWavFiles decodes Steam-format voice data payloads and writes them to a WAV file.
 // It uses the Opus decoder for each chunk and encodes the PCM output as a WAV file.
-func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
+// convertAudioDataToWavFiles decodes Steam-format voice data payloads and writes them to a WAV file.
+// It uses the Opus decoder for each chunk and encodes the PCM output as a WAV file. Returns an error if any operation fails.
+func convertAudioDataToWavFiles(payloads [][]byte, fileName string) error {
 	// This sample rate can be set using data from the VoiceData net message.
 	// But every demo processed has used 24000 and is single channel.
 	voiceDecoder, err := decoder.NewOpusDecoder(constants.DefaultSteamSampleRate, constants.DefaultNumChannels)
-
 	if err != nil {
-		fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
+		return fmt.Errorf("failed to initialize OpusDecoder: %w", err)
 	}
 
 	o := make([]int, 0, 1024)
 
 	for _, payload := range payloads {
 		c, err := decoder.DecodeChunk(payload)
-
 		if err != nil {
-			fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
+			return fmt.Errorf("failed to decode chunk: %w", err)
 		}
 
 		// Not silent frame
 		if c != nil && len(c.Data) > 0 {
 			pcm, err := voiceDecoder.Decode(c.Data)
-
 			if err != nil {
-				fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
+				return fmt.Errorf("failed to decode Opus frame: %w", err)
 			}
 
 			converted := make([]int, len(pcm))
@@ -112,9 +114,8 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 	}
 
 	outFile, err := os.Create(fileName)
-
 	if err != nil {
-		fmt.Printf("failed to initialize OpusDecoder: %v\n", err)
+		return fmt.Errorf("failed to create wav file: %w", err)
 	}
 	defer outFile.Close()
 
@@ -131,10 +132,11 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) {
 
 	// Write voice data to the file.
 	if err := enc.Write(buf); err != nil {
-		fmt.Printf("failed to write WAV data: %v\n", err)
+		return fmt.Errorf("failed to write WAV data: %w", err)
 	}
 
 	enc.Close()
+	return nil
 }
 
 // opusToWav decodes Opus-format voice data and writes the result to a WAV file.
