@@ -16,6 +16,7 @@ import (
 	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/msgs2"
 )
 
+
 const (
 	defaultSteamSampleRate = 24000
 	defaultOpusSampleRate  = 48000
@@ -24,18 +25,6 @@ const (
 	intPCMMaxValue         = 2147483647
 )
 
-	"CS2VoiceData/decoder"
-	"flag"
-	"fmt"
-	"log"
-	"os"
-	"strconv"
-
-	"github.com/go-audio/audio"
-	"github.com/go-audio/wav"
-	dem "github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs"
-	"github.com/markus-wa/demoinfocs-golang/v4/pkg/demoinfocs/msgs2"
-)
 
 // main is the entry point for the CS2 voice data extraction tool.
 // It parses command-line arguments, processes the demo file, and writes WAV files for each player's voice data.
