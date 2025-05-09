@@ -2,6 +2,7 @@ package main
 
 import (
 	"CS2VoiceData/decoder"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -14,14 +15,23 @@ import (
 )
 
 func main() {
+	// Use a command-line flag for the demo file path for Go idiomatic CLI behavior
+	demoPath := flag.String("demo", "", "Path to the unzipped CS2 demo file")
+	flag.Parse()
+
+	if *demoPath == "" {
+		fmt.Fprintln(os.Stderr, "Usage: ./main -demo <path-to-demo-file>")
+		os.Exit(1)
+	}
+
 	// Create a map of a users to voice data.
 	// Each chunk of voice data is a slice of bytes, store all those slices in a grouped slice.
 	var voiceDataPerPlayer = map[string][][]byte{}
 
 	// The file path to an unzipped demo file.
-	file, err := os.Open("1-34428882-6181-4c75-a24b-4982764122e2.dem")
+	file, err := os.Open(*demoPath)
 	if err != nil {
-		log.Fatal("Failed to open demo file")
+		log.Fatalf("Failed to open demo file '%s': %v", *demoPath, err)
 	}
 	defer file.Close()
 
