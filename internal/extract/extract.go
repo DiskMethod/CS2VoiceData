@@ -1,7 +1,7 @@
 package extract
 
 import (
-	"CS2VoiceData/decoder"
+	"CS2VoiceData/internal/decoder"
 	"errors"
 	"fmt"
 	"log"

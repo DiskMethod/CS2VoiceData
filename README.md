@@ -1,44 +1,45 @@
-# CS2 Voice extractor
+# CS2VoiceData Modular CLI Suite
 
-Example code for exporting players voices from CS2 demos into WAV files.
+A modular suite of CLI tools for extracting, compressing, transcribing, and analyzing player voice data from CS2 demo files.
 
-**Valve Matchmaking demos do not contain voice audio data, as such there is nothing to extract from MM demo files.**
+**Forked from:** [DandrewsDev/CS2VoiceData](https://github.com/DandrewsDev/CS2VoiceData)
 
+---
 
-## Purpose and goals
-The intention of this project is not to be an end user tool for bulk or batch processing demos and extracting voice data. 
+## Features
 
-However, this should serve as a guideline for how to process the audio data as pulled by 
-[demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang). People using that tool to process their demos 
-who wish to also pull voice data can leverage this sample to build that audio processing into their demo processing
-tools.
+- Modular CLI tools for each stage of CS2 voice data processing:
+  - Extraction (`cs2voice-extract`)
+  - Compression (`cs2voice-compress` - planned)
+  - Transcription (`cs2voice-transcribe` - planned)
+  - Analysis (`cs2voice-analyze` - planned)
+  - Unified pipeline (`cs2voice-pipeline` - planned)
 
+---
 
-## Setup and processing
-1. Pulling all the required dependencies.
-   2. `go get ./...`
-3. Update the cs2-voide-data.go file with the path to your unzipped demo file.
-4. Running the sample
-   5. `go run cs2-voice-data.go`
+## Installation
 
+- Requires Go 1.23+ and dependencies listed in `go.mod`.
+- Some tools may require additional system libraries (e.g., libopus, ffmpeg). See each tool's README for details.
 
-## Dependencies
-This project does have a dependency on lib opus, which is easy to install on mac/linux.
+---
 
-Linux:
-```sh
-sudo apt-get install pkg-config libopus-dev libopusfile-dev
-```
+## Documentation
 
-Mac:
-```sh
-brew install pkg-config opus opusfile
-```
+**Usage instructions and CLI documentation for each tool are located in their respective directories under `cmd/`.**
 
-As for direct application dependencies those are all handled by the go.mod and are all pulled doing the `go get ./...` from step 2 above.
+- Example: See [`cmd/cs2voice-extract/README.md`](cmd/cs2voice-extract/README.md) for extraction tool usage.
 
-# Acknowledgements
+---
 
-Thanks to [@rumblefrog](https://github.com/rumblefrog) for all their help in getting this working. Check out this excellent blog post about [Reversing Steam Voice Codec](https://zhenyangli.me/posts/reversing-steam-voice-codec/) and their work on [Source Chat Relay](https://github.com/rumblefrog/source-chat-relay)
+## Acknowledgements
 
-This sample relies on [demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang). Thank you to [@markus-wa](https://github.com/markus-wa), [@akiver](https://github.com/akiver) and all the contributors there.
+- Forked and extended from [DandrewsDev/CS2VoiceData](https://github.com/DandrewsDev/CS2VoiceData).
+- Thanks to [@DandrewsDev](https://github.com/DandrewsDev), [@rumblefrog](https://github.com/rumblefrog), [@markus-wa](https://github.com/markus-wa), and all contributors to the original project and libraries.
+- Special thanks to [demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang) and [Reversing Steam Voice Codec blog post](https://zhenyangli.me/posts/reversing-steam-voice-codec/).
+
+---
+
+## License
+
+MIT
