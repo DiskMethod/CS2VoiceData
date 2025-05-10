@@ -1,4 +1,4 @@
-# CS2VoiceData Modular CLI Suite
+# cs2-voice-tools
 
 A modular suite of CLI tools for extracting, compressing, transcribing, and analyzing player voice data from CS2 demo files.
 
