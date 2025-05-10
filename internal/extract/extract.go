@@ -1,12 +1,13 @@
 package extract
 
 import (
-	"github.com/DiskMethod/cs2-voice-tools/internal/decoder"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/DiskMethod/cs2-voice-tools/internal/decoder"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
@@ -19,13 +20,13 @@ const (
 	// defaultSteamSampleRate is the sample rate (Hz) for Steam-format voice data.
 	defaultSteamSampleRate = 24000
 	// defaultOpusSampleRate is the sample rate (Hz) for Opus-format voice data.
-	defaultOpusSampleRate  = 48000
+	defaultOpusSampleRate = 48000
 	// defaultNumChannels is the number of audio channels (mono audio).
-	defaultNumChannels     = 1
+	defaultNumChannels = 1
 	// defaultBitDepth is the bit depth for output WAV files.
-	defaultBitDepth        = 32
+	defaultBitDepth = 32
 	// intPCMMaxValue is the maximum integer value for PCM normalization.
-	intPCMMaxValue         = 2147483647
+	intPCMMaxValue = 2147483647
 )
 
 // ExtractVoiceData parses a CS2 demo file and writes per-player WAV files containing voice data.

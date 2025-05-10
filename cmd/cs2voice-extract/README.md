@@ -45,6 +45,10 @@ WAV files will be created in the current directory, named by player Steam ID.
   - `libopus` (for Opus voice decoding)
 - Go dependencies are listed in the root `go.mod`.
 
+> **Note:**  
+> This tool requires cgo. Make sure `CGO_ENABLED=1` is set in your environment when building or running.  
+> If you use VS Code (with the Go extension), set `"go.toolsEnvVars": { "CGO_ENABLED": "1" }` in your workspace or user settings to avoid IDE errors and ensure proper code navigation.
+
 **Install Opus dependencies:**
 
 - **Ubuntu/Debian:**

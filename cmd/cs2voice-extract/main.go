@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+
 	"github.com/DiskMethod/cs2-voice-tools/internal/extract"
 )
 

@@ -3,6 +3,7 @@ package decoder
 import (
 	"bytes"
 	"encoding/binary"
+
 	"gopkg.in/hraban/opus.v2"
 )
 
