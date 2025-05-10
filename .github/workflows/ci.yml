@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: Static Analysis & Formatting
+    name: Build & Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -27,3 +27,6 @@ jobs:
 
       - name: Run checks via Makefile
         run: make check
+
+      - name: Build all packages
+        run: make build

@@ -1,4 +1,4 @@
-.PHONY: fmt fmt-check vet check
+.PHONY: fmt fmt-check vet check build
 
 # Format code using goimports
 fmt:
@@ -19,3 +19,8 @@ vet:
 
 # Run all checks (formatting and vet)
 check: fmt-check vet
+
+# Build all packages with CGO enabled by default
+CGO_ENABLED ?= 1
+build:
+	CGO_ENABLED=$(CGO_ENABLED) go build ./...
