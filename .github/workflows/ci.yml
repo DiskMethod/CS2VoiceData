@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Opus dependencies
+        run: sudo apt-get update && sudo apt-get install -y libopus-dev
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
