@@ -17,7 +17,7 @@ cs2voice extract [options] <path-to-demo-file>
 Or build from source:
 
 ```sh
-go build -o cs2voice ./cmd/cs2voice
+go build
 ./cs2voice extract [options] <path-to-demo-file>
 ```
 
@@ -84,12 +84,6 @@ Audio files will be created in the specified output directory (default: current 
 
 ---
 
-## License
-
-MIT
-
----
-
 ## See Also
 
-- [Project root README](../../README.md)
+- [Project root README](../README.md)

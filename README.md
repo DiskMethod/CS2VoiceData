@@ -38,7 +38,3 @@ A modular suite of CLI tools for extracting, transcribing, and analyzing player 
 - Special thanks to [demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang) and [Reversing Steam Voice Codec blog post](https://zhenyangli.me/posts/reversing-steam-voice-codec/).
 
 ---
-
-## License
-
-MIT
