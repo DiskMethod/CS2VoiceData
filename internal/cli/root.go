@@ -2,29 +2,29 @@
 package cli
 
 import (
-    "os"
+	"os"
 
-    "github.com/DiskMethod/cs2-voice-tools/internal/logutil"
-    "github.com/spf13/cobra"
+	"github.com/DiskMethod/cs2-voice-tools/internal/logutil"
+	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-    Use:   "cs2voice",
-    Short: "Suite of CS2 voice utilities",
-    Long:  `cs2voice is a single binary providing sub-commands to extract, transcribe, and analyze player voice data from CS2 demos.`,
+	Use:   "cs2voice",
+	Short: "Suite of CS2 voice utilities",
+	Long:  `cs2voice is a single binary providing sub-commands to extract, transcribe, and analyze player voice data from CS2 demos.`,
 }
 
 func init() {
-    // Global / persistent flags.
-    rootCmd.PersistentFlags().BoolVarP(&logutil.Verbose, "verbose", "v", false, "enable verbose output")
+	// Global / persistent flags.
+	rootCmd.PersistentFlags().BoolVarP(&logutil.Verbose, "verbose", "v", false, "enable verbose output")
 
-    // Sub-commands
-    rootCmd.AddCommand(NewExtractCmd())
+	// Sub-commands
+	rootCmd.AddCommand(ExtractCmd())
 }
 
 // Execute is the main entry point for running the CLI.
 func Execute() {
-    if err := rootCmd.Execute(); err != nil {
-        os.Exit(1)
-    }
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
