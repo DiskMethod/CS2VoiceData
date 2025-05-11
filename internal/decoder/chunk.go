@@ -27,11 +27,11 @@ const (
 
 var (
 	// ErrInsufficientData is returned when there is not enough data to parse a chunk.
-	ErrInsufficientData   = errors.New("insufficient amount of data to chunk")
+	ErrInsufficientData = errors.New("insufficient amount of data to chunk")
 	// ErrInvalidVoicePacket is returned when a voice packet does not match the expected format.
 	ErrInvalidVoicePacket = errors.New("invalid voice packet")
 	// ErrMismatchChecksum is returned when a packet's checksum does not match the computed value.
-	ErrMismatchChecksum   = errors.New("mismatching voice data checksum")
+	ErrMismatchChecksum = errors.New("mismatching voice data checksum")
 )
 
 // Chunk represents a parsed voice data packet from a CS2 demo file.
@@ -56,8 +56,6 @@ type Chunk struct {
 // - crc32: CRC32 checksum of all previous bytes
 //
 // For more details, see: https://zhenyangli.me/posts/reversing-steam-voice-codec/
-// DecodeChunk parses a raw voice data packet from a CS2 demo file and returns a Chunk.
-// Returns an error if the packet is invalid, incomplete, or fails checksum verification.
 func DecodeChunk(b []byte) (*Chunk, error) {
 	bLen := len(b)
 

@@ -2,19 +2,27 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
 	"github.com/DiskMethod/cs2-voice-tools/internal/extract"
+	"github.com/DiskMethod/cs2-voice-tools/internal/logutil"
 )
 
 // main is the entry point for the cs2voice-extract command-line tool.
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: cs2voice-extract <demo-file>")
-		os.Exit(1)
+	flag.BoolVar(&logutil.Verbose, "verbose", false, "enable verbose output")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [flags] <demo-file>\n", os.Args[0])
+		flag.PrintDefaults()
 	}
-	demoPath := os.Args[1]
+	flag.Parse()
+	if flag.NArg() < 1 {
+		flag.Usage()
+		os.Exit(2)
+	}
+	demoPath := flag.Arg(0)
 	err := extract.ExtractVoiceData(demoPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error extracting voice data: %v\n", err)
