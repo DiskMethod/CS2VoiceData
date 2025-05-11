@@ -129,7 +129,7 @@ func Decode(decoder *opus.Decoder, data []byte) (pcm []float32, err error) {
 
 	nlen, err := decoder.DecodeFloat32(data, pcm)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	return pcm[:nlen], nil

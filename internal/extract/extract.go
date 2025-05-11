@@ -129,7 +129,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) error {
 func opusToWav(data [][]byte, wavName string) (err error) {
 	opusDecoder, err := decoder.NewDecoder(defaultOpusSampleRate, defaultNumChannels)
 	if err != nil {
-		return
+		return fmt.Errorf("failed to initialize OpusDecoder: %w", err)
 	}
 	var pcmBuffer []int
 	for _, d := range data {
@@ -146,7 +146,7 @@ func opusToWav(data [][]byte, wavName string) (err error) {
 	}
 	file, err := os.Create(wavName)
 	if err != nil {
-		return
+		return fmt.Errorf("failed to create wav file: %w", err)
 	}
 	defer file.Close()
 	enc := wav.NewEncoder(file, defaultOpusSampleRate, defaultBitDepth, defaultNumChannels, 1)
@@ -160,7 +160,7 @@ func opusToWav(data [][]byte, wavName string) (err error) {
 	}
 	err = enc.Write(buffer)
 	if err != nil {
-		return
+		return fmt.Errorf("failed to write WAV data: %w", err)
 	}
-	return
+	return nil
 }
