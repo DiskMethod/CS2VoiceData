@@ -1,3 +1,4 @@
+// Package extract provides functions to extract and convert voice data from CS2 demo files into audio files.
 package extract
 
 import (
@@ -18,18 +19,24 @@ import (
 // Default audio parameters for decoding CS2 demo voice data.
 const (
 	// defaultSteamSampleRate is the sample rate (Hz) for Steam-format voice data.
+	// Used as the default when decoding Steam-format audio payloads.
 	defaultSteamSampleRate = 24000
 	// defaultOpusSampleRate is the sample rate (Hz) for Opus-format voice data.
+	// Used as the default when decoding Opus-format audio payloads.
 	defaultOpusSampleRate = 48000
 	// defaultNumChannels is the number of audio channels (mono audio).
+	// Voice data is always mono in CS2 demos.
 	defaultNumChannels = 1
 	// defaultBitDepth is the bit depth for output WAV files.
+	// Output WAV files are written with this bit depth.
 	defaultBitDepth = 32
 	// intPCMMaxValue is the maximum integer value for PCM normalization.
+	// Used when converting float PCM samples to integer for WAV encoding.
 	intPCMMaxValue = 2147483647
 )
 
 // ExtractVoiceData parses a CS2 demo file and writes per-player WAV files containing voice data.
+// It handles both Steam and Opus voice data formats and writes each player's audio to a separate WAV file.
 func ExtractVoiceData(demoPath string) error {
 	voiceDataPerPlayer := map[string][][]byte{}
 

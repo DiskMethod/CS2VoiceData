@@ -1,3 +1,4 @@
+// Package main provides the entry point for the cs2voice-extract CLI tool.
 package main
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/DiskMethod/cs2-voice-tools/internal/extract"
 )
 
+// main is the entry point for the cs2voice-extract command-line tool.
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: cs2voice-extract <demo-file>")
