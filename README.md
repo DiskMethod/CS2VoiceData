@@ -1,6 +1,6 @@
 # cs2-voice-tools
 
-A modular suite of CLI tools for extracting, compressing, transcribing, and analyzing player voice data from CS2 demo files.
+A modular suite of CLI tools for extracting, transcribing, and analyzing player voice data from CS2 demo files. (Compression is now handled directly by the extraction tool.)
 
 **Forked from:** [DandrewsDev/CS2VoiceData](https://github.com/DandrewsDev/CS2VoiceData)
 
@@ -9,8 +9,7 @@ A modular suite of CLI tools for extracting, compressing, transcribing, and anal
 ## Features
 
 - Modular CLI tools for each stage of CS2 voice data processing:
-  - Extraction (`cs2voice-extract`)
-  - Compression (`cs2voice-compress` - planned)
+  - Extraction (`cs2voice-extract`): Extracts per-player voice data from CS2 demos with support for direct output to various formats (WAV, FLAC, etc.) and user-selectable audio quality (sample rate, bit depth, etc.)
   - Transcription (`cs2voice-transcribe` - planned)
   - Analysis (`cs2voice-analyze` - planned)
   - Unified pipeline (`cs2voice-pipeline` - planned)
@@ -28,7 +27,7 @@ A modular suite of CLI tools for extracting, compressing, transcribing, and anal
 
 **Usage instructions and CLI documentation for each tool are located in their respective directories under `cmd/`.**
 
-- Example: See [`cmd/cs2voice-extract/README.md`](cmd/cs2voice-extract/README.md) for extraction tool usage.
+- Example: See [`cmd/cs2voice-extract/README.md`](cmd/cs2voice-extract/README.md) for detailed extraction tool usage, including new format and quality options.
 
 ---
 

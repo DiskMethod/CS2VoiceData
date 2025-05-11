@@ -1,13 +1,15 @@
 # cs2voice-extract
 
-Extracts per-player voice data from CS2 demo files and saves each player's audio as a separate WAV file.
+Extracts per-player voice data from CS2 demo files and saves each player's audio in a user-specified format (WAV, FLAC, etc.) with selectable audio quality. All audio extraction and compression are handled in a single step.
 
 ---
 
 ## Features
 
 - Parses CS2 demo files (`.dem`) and extracts voice chat audio.
-- Outputs one WAV file per player found in the demo.
+- Outputs one audio file per player found in the demo, with user-selectable format (WAV, FLAC, etc.).
+- User-configurable sample rate, bit depth, and output directory.
+- Supports filtering by player (SteamID).
 - Designed for modular use in larger CS2 voice data processing pipelines.
 
 ---
@@ -15,26 +17,38 @@ Extracts per-player voice data from CS2 demo files and saves each player's audio
 ## Usage
 
 ```sh
-go run ./cmd/cs2voice-extract <path-to-demo-file>
+cs2voice-extract [options] <path-to-demo-file>
 ```
 Or, after building:
 ```sh
 go build -o cs2voice-extract ./cmd/cs2voice-extract
-./cs2voice-extract <path-to-demo-file>
+./cs2voice-extract [options] <path-to-demo-file>
 ```
 
-**Example:**
+**Examples:**
 ```sh
-./cs2voice-extract /path/to/match.dem
+# Extract all voice as FLAC to a custom directory
+cs2voice-extract -o ./voices --format flac /path/to/match.dem
+
+# Extract only for a specific player, as 16-bit WAV
+cs2voice-extract --player 76561198000000000 --bit-depth 16 /path/to/match.dem
 ```
 
-WAV files will be created in the current directory, named by player Steam ID.
+Audio files will be created in the specified output directory (default: current directory), named by player Steam ID.
 
 ---
 
 ## Options
 
 - `<path-to-demo-file>`: Path to an unzipped CS2 demo file (`.dem`).
+- `-o, --output-dir <dir>`: Output directory for extracted audio files (default: current directory)
+- `--format <wav|flac|mp3|ogg>`: Output audio format (default: wav)
+- `--sample-rate <rate>`: Set audio sample rate (default: 48000)
+- `--bit-depth <bits>`: Set audio bit depth (default: 32)
+- `--player <steamid>`: Extract voice for specific player(s) only (can be repeated)
+- `--force`: Overwrite existing files
+- `-v, --verbose`: Enable verbose logging
+- `--help`: Show help message
 
 ---
 
