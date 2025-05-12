@@ -17,9 +17,15 @@ var (
 	// playerFilter is a comma-separated list of SteamID64s to filter by
 	playerFilter string
 
+	// formatOption specifies the output format for audio files
+	formatOption string
+
 	// steamID64Regex is the regular expression for validating SteamID64 format
 	// SteamID64 should be a 17-digit number starting with 7656
 	steamID64Regex = regexp.MustCompile(`^7656\d{13}$`)
+
+	// supportedFormats is the list of audio formats supported by this tool
+	supportedFormats = []string{"wav", "mp3", "ogg", "flac", "aac", "m4a"}
 )
 
 // extractCmd represents the extract command
@@ -59,13 +65,39 @@ var extractCmd = &cobra.Command{
 			}
 		}
 
-		if err := extract.ExtractVoiceData(demoPath, Opts.AbsOutputDir, Opts.ForceOverwrite, playerIDs); err != nil {
+		// Validate format option
+		format := strings.ToLower(formatOption)
+		isFormatValid := false
+
+		if format == "" {
+			// Default to WAV if no format specified
+			format = "wav"
+			isFormatValid = true
+		} else {
+			// Check if the format is supported
+			for _, supportedFormat := range supportedFormats {
+				if format == supportedFormat {
+					isFormatValid = true
+					break
+				}
+			}
+		}
+
+		if !isFormatValid {
+			return fmt.Errorf("unsupported format: %s (supported formats: %s)",
+				format, strings.Join(supportedFormats, ", "))
+		}
+
+		if err := extract.ExtractVoiceData(demoPath, Opts.AbsOutputDir, Opts.ForceOverwrite, playerIDs, format); err != nil {
 			return err
 		}
 
 		msg := fmt.Sprintf("Voice data extraction complete. Files saved to: %s", Opts.AbsOutputDir)
 		if len(playerIDs) > 0 {
 			msg += fmt.Sprintf(" (filtered to %d players)", len(playerIDs))
+		}
+		if format != "wav" {
+			msg += fmt.Sprintf(" (format: %s)", format)
 		}
 		fmt.Println(msg)
 		return nil
@@ -77,4 +109,6 @@ func init() {
 
 	// Add command-specific flags
 	extractCmd.Flags().StringVarP(&playerFilter, "players", "p", "", "filter to specific players by steamID64 (comma-separated list)")
+	extractCmd.Flags().StringVarP(&formatOption, "format", "t", "wav",
+		fmt.Sprintf("output audio format (%s)", strings.Join(supportedFormats, ", ")))
 }

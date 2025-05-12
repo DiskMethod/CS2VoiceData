@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/DiskMethod/cs2-voice-tools/internal/decoder"
 
@@ -31,11 +33,12 @@ const (
 	intPCMMaxValue = 2147483647
 )
 
-// ExtractVoiceData parses a CS2 demo file and writes per-player WAV files containing voice data.
+// ExtractVoiceData parses a CS2 demo file and writes per-player audio files containing voice data.
 // The outputDir parameter specifies where to save the extracted files.
 // When forceOverwrite is false, the function will not overwrite existing files.
 // If playerIDs is provided, only extracts voice data for those specific players.
-func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs []string) error {
+// The format parameter specifies the desired output audio format (wav, mp3, etc.).
+func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs []string, format string) error {
 	// Convert playerIDs slice to a map for O(1) lookups
 	playerFilter := make(map[string]bool)
 	for _, id := range playerIDs {
@@ -54,11 +57,11 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 	defer file.Close()
 
 	parser := dem.NewParser(file)
-	var format string
+	var voiceDataFormat string
 
 	parser.RegisterNetMessageHandler(func(m *msgs2.CSVCMsg_VoiceData) {
 		steamId := strconv.Itoa(int(m.GetXuid()))
-		format = m.Audio.Format.String()
+		voiceDataFormat = m.Audio.Format.String()
 		voiceDataPerPlayer[steamId] = append(voiceDataPerPlayer[steamId], m.Audio.VoiceData)
 	})
 
@@ -88,34 +91,49 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 			foundPlayers[playerId] = true
 		}
 
-		wavFilePath := filepath.Join(outputDir, fmt.Sprintf("%s.wav", playerId))
+		// Always create a WAV file first (as intermediate format)
+		tempWavPath := filepath.Join(outputDir, fmt.Sprintf("%s.wav", playerId))
+
+		// Determine the final output path based on format
+		finalOutputPath := filepath.Join(outputDir, fmt.Sprintf("%s.%s", playerId, format))
 
 		// Check if file already exists and respect forceOverwrite flag
-		if _, err := os.Stat(wavFilePath); err == nil && !forceOverwrite {
-			slog.Warn("File already exists, skipping", "path", wavFilePath)
+		if _, err := os.Stat(finalOutputPath); err == nil && !forceOverwrite {
+			slog.Warn("File already exists, skipping", "path", finalOutputPath)
 			continue
 		} else if !os.IsNotExist(err) && err != nil {
 			// Some other error occurred checking the file
-			slog.Error("Failed to check file existence", "path", wavFilePath, "error", err)
+			slog.Error("Failed to check file existence", "path", finalOutputPath, "error", err)
 			continue
 		}
 
-		if format == "VOICEDATA_FORMAT_OPUS" {
-			err = opusToWav(voiceData, wavFilePath)
+		var err error
+		// Generate the WAV file first
+		if voiceDataFormat == "VOICEDATA_FORMAT_OPUS" {
+			err = opusToWav(voiceData, tempWavPath)
 			if err != nil {
 				slog.Error("Failed to initialize OpusDecoder", "error", err)
 				continue
 			}
-		} else if format == "VOICEDATA_FORMAT_STEAM" {
-			err = convertAudioDataToWavFiles(voiceData, wavFilePath)
+		} else if voiceDataFormat == "VOICEDATA_FORMAT_STEAM" {
+			err = convertAudioDataToWavFiles(voiceData, tempWavPath)
 			if err != nil {
 				slog.Error("Failed to write WAV file", "player", playerId, "error", err)
+				continue
 			}
 		} else {
-			slog.Warn("Unknown voice data format", "format", format)
+			slog.Warn("Unknown voice data format", "format", voiceDataFormat)
 			continue
 		}
-		slog.Debug("Writing WAV file", "path", wavFilePath)
+
+		// Convert to the desired format if needed
+		outputPath, err := convertAudioToFormat(tempWavPath, format)
+		if err != nil {
+			slog.Error("Failed to convert audio format", "player", playerId, "format", format, "error", err)
+			continue
+		}
+
+		slog.Debug("Audio file created successfully", "player", playerId, "path", outputPath)
 	}
 
 	defer parser.Close()
@@ -136,6 +154,48 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 
 	slog.Debug("Extraction complete for demo file", "path", demoPath)
 	return nil
+}
+
+// convertAudioToFormat uses ffmpeg to convert a WAV file to the specified format
+// If the target format is wav, this is a no-op (returns the input path)
+func convertAudioToFormat(wavPath string, format string) (string, error) {
+	// If the format is already WAV, no conversion needed
+	if format == "wav" {
+		return wavPath, nil
+	}
+
+	// Check if ffmpeg is available
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		return "", fmt.Errorf("ffmpeg not found: %w", err)
+	}
+
+	// Create the output file path
+	outputPath := strings.TrimSuffix(wavPath, filepath.Ext(wavPath)) + "." + format
+
+	// Build the ffmpeg command
+	cmd := exec.Command("ffmpeg",
+		"-i", wavPath,           // Input file
+		"-y",                    // Overwrite output file
+		"-loglevel", "error",    // Only show errors
+		"-hide_banner",          // Hide the banner
+		outputPath)              // Output file
+
+	// Capture stderr for error reporting
+	var stderr strings.Builder
+	cmd.Stderr = &stderr
+
+	// Run the command
+	slog.Debug("Converting audio", "from", wavPath, "to", outputPath)
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("ffmpeg conversion failed: %w: %s", err, stderr.String())
+	}
+
+	// Delete the original WAV file (we don't need it anymore)
+	if err := os.Remove(wavPath); err != nil {
+		slog.Warn("Failed to remove temp WAV file", "path", wavPath, "error", err)
+	}
+
+	return outputPath, nil
 }
 
 // convertAudioDataToWavFiles decodes Steam-format voice data payloads and writes them to a WAV file.

@@ -36,6 +36,9 @@ All commands support the following global flags:
 The `extract` command supports these additional flags:
 
 - `-p, --players`: Filter to specific players by SteamID64 (comma-separated list)
+- `-t, --format`: Output audio format (wav, mp3, ogg, flac, aac, m4a - default: wav)
+
+> **Note**: Using formats other than WAV requires ffmpeg to be installed on your system
 
 Examples:
 
@@ -58,8 +61,14 @@ cs2voice extract --force my-demo.dem
 # Extract voice for specific players only
 cs2voice extract --players 76561198123456789,76561198987654321 my-demo.dem
 
+# Extract voice in MP3 format
+cs2voice extract --format mp3 my-demo.dem
+
+# Extract voice in FLAC format (lossless compression)
+cs2voice extract --format flac my-demo.dem
+
 # Combine multiple flags
-cs2voice extract -v -o ./output -f -p 76561198123456789 my-demo.dem
+cs2voice extract -v -o ./output -f -p 76561198123456789 -t mp3 my-demo.dem
 ```
 
 ---
