@@ -17,7 +17,7 @@ var extractCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		demoPath := args[0]
-		if err := extract.ExtractVoiceData(demoPath, Opts.AbsOutputDir); err != nil {
+		if err := extract.ExtractVoiceData(demoPath, Opts.AbsOutputDir, Opts.ForceOverwrite); err != nil {
 			return err
 		}
 		fmt.Printf("Voice data extraction complete. Files saved to: %s\n", Opts.AbsOutputDir)

@@ -33,7 +33,8 @@ const (
 
 // ExtractVoiceData parses a CS2 demo file and writes per-player WAV files containing voice data.
 // The outputDir parameter specifies where to save the extracted files.
-func ExtractVoiceData(demoPath, outputDir string) error {
+// When forceOverwrite is false, the function will not overwrite existing files.
+func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool) error {
 	voiceDataPerPlayer := map[string][][]byte{}
 
 	slog.Debug("Opening demo file", "path", demoPath)
@@ -68,6 +69,17 @@ func ExtractVoiceData(demoPath, outputDir string) error {
 
 	for playerId, voiceData := range voiceDataPerPlayer {
 		wavFilePath := filepath.Join(outputDir, fmt.Sprintf("%s.wav", playerId))
+
+		// Check if file already exists and respect forceOverwrite flag
+		if _, err := os.Stat(wavFilePath); err == nil && !forceOverwrite {
+			slog.Warn("File already exists, skipping", "path", wavFilePath)
+			continue
+		} else if !os.IsNotExist(err) && err != nil {
+			// Some other error occurred checking the file
+			slog.Error("Failed to check file existence", "path", wavFilePath, "error", err)
+			continue
+		}
+
 		if format == "VOICEDATA_FORMAT_OPUS" {
 			err = opusToWav(voiceData, wavFilePath)
 			if err != nil {

@@ -29,6 +29,7 @@ All commands support the following global flags:
 
 - `-v, --verbose`: Enable verbose logging (shows additional debug information)
 - `-o, --output-dir`: Directory to save output files (default: current directory)
+- `-f, --force`: Force overwrite existing files (default: skip existing files)
 
 Examples:
 
@@ -44,6 +45,12 @@ cs2voice extract -v -o /path/to/output my-demo.dem
 
 # Directory will be created if it doesn't exist
 cs2voice extract -o ./new-directory my-demo.dem
+
+# Force overwrite existing files
+cs2voice extract --force my-demo.dem
+
+# Combine multiple flags
+cs2voice extract -v -o ./output -f my-demo.dem
 ```
 
 ---

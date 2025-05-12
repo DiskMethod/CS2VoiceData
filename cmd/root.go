@@ -23,6 +23,10 @@ type Options struct {
 	// AbsOutputDir is the resolved absolute path of OutputDir
 	// This is computed during command execution
 	AbsOutputDir string
+
+	// ForceOverwrite when true allows overwriting existing files
+	// When false (default), operations will fail if files already exist
+	ForceOverwrite bool
 }
 
 // Opts is the global options instance used by all commands
@@ -139,6 +143,7 @@ func init() {
 
 	// In the future, register directly with the Options struct for new flags
 	rootCmd.PersistentFlags().StringVarP(&Opts.OutputDir, "output-dir", "o", "", "directory to save output files (default: current directory)")
+	rootCmd.PersistentFlags().BoolVarP(&Opts.ForceOverwrite, "force", "f", false, "force overwrite existing files")
 
 	// Keep options in sync
 	Opts.Verbose = Verbose
