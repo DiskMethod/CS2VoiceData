@@ -23,14 +23,6 @@ A modular suite of CLI tools for extracting, transcribing, and analyzing player 
 
 ---
 
-## Documentation
-
-**Usage instructions and CLI documentation for each tool are located in their respective directories under `cmd/`.**
-
-- Example: See [`cmd/cs2voice/README.md`](cmd/cs2voice/README.md) for detailed extraction tool usage, including new format and quality options.
-
----
-
 ## Acknowledgements
 
 - Forked and extended from [DandrewsDev/CS2VoiceData](https://github.com/DandrewsDev/CS2VoiceData).
