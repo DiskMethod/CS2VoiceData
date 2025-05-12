@@ -4,12 +4,11 @@ package extract
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 
 	"github.com/DiskMethod/cs2-voice-tools/internal/decoder"
-	"github.com/DiskMethod/cs2-voice-tools/internal/logutil"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
@@ -35,7 +34,7 @@ const (
 func ExtractVoiceData(demoPath string) error {
 	voiceDataPerPlayer := map[string][][]byte{}
 
-	logutil.VLog("Opening demo file: %s", demoPath)
+	slog.Debug("Opening demo file", "path", demoPath)
 	file, err := os.Open(demoPath)
 	if err != nil {
 		return fmt.Errorf("failed to open demo file '%s': %w", demoPath, err)
@@ -63,27 +62,30 @@ func ExtractVoiceData(demoPath string) error {
 		return fmt.Errorf("unknown error parsing demo: %w", err)
 	}
 
-	logutil.VLog("Found %d players with voice data", len(voiceDataPerPlayer))
+	slog.Debug("Found players with voice data", "count", len(voiceDataPerPlayer))
 
 	for playerId, voiceData := range voiceDataPerPlayer {
 		wavFilePath := fmt.Sprintf("%s.wav", playerId)
 		if format == "VOICEDATA_FORMAT_OPUS" {
 			err = opusToWav(voiceData, wavFilePath)
 			if err != nil {
-				log.Printf("failed to initialize OpusDecoder: %v", err)
+				slog.Error("Failed to initialize OpusDecoder", "error", err)
 				continue
 			}
 		} else if format == "VOICEDATA_FORMAT_STEAM" {
 			err = convertAudioDataToWavFiles(voiceData, wavFilePath)
 			if err != nil {
-				log.Printf("failed to write wav for player %s: %v", playerId, err)
+				slog.Error("Failed to write WAV file", "player", playerId, "error", err)
 			}
+		} else {
+			slog.Warn("Unknown voice data format", "format", format)
+			continue
 		}
-		logutil.VLog("Writing WAV file: %s", wavFilePath)
+		slog.Debug("Writing WAV file", "path", wavFilePath)
 	}
 
 	defer parser.Close()
-	logutil.VLog("Extraction complete for demo file: %s", demoPath)
+	slog.Debug("Extraction complete for demo file", "path", demoPath)
 	return nil
 }
 
@@ -143,7 +145,7 @@ func opusToWav(data [][]byte, wavName string) error {
 	for _, d := range data {
 		pcm, err := decoder.Decode(opusDecoder, d)
 		if err != nil {
-			log.Printf("failed to decode Opus data: %v", err)
+			slog.Warn("Failed to decode Opus data", "error", err)
 			continue
 		}
 		pp := make([]int, len(pcm))

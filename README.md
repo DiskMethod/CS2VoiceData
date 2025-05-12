@@ -21,6 +21,24 @@ A modular suite of CLI tools for extracting, transcribing, and analyzing player 
 - Requires Go 1.23+ and dependencies listed in `go.mod`.
 - Some tools may require additional system libraries (e.g., libopus, ffmpeg). See each tool's README for details.
 
+## Usage
+
+### Global Flags
+
+All commands support the following global flags:
+
+- `-v, --verbose`: Enable verbose logging (shows additional debug information)
+
+Examples:
+
+```bash
+# Run extraction with verbose logging
+cs2voice extract --verbose my-demo.dem
+
+# Short form also works
+cs2voice extract -v my-demo.demo
+```
+
 ---
 
 ## Acknowledgements

@@ -17,7 +17,7 @@ require (
 	github.com/golang/geo v0.0.0-20250509130527-0a13e5a5d53d // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/markus-wa/go-unassert v0.1.3 // indirect
+	github.com/markus-wa/go-unassert v0.1.3 // indirect 
 	github.com/markus-wa/gobitread v0.2.4 // indirect
 	github.com/markus-wa/godispatch v1.4.1 // indirect
 	github.com/markus-wa/ice-cipher-go v0.0.0-20230901094113-348096939ba7 // indirect
