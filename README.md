@@ -31,6 +31,12 @@ All commands support the following global flags:
 - `-o, --output-dir`: Directory to save output files (default: current directory)
 - `-f, --force`: Force overwrite existing files (default: skip existing files)
 
+### Extract Command Flags
+
+The `extract` command supports these additional flags:
+
+- `-p, --players`: Filter to specific players by SteamID64 (comma-separated list)
+
 Examples:
 
 ```bash
@@ -49,8 +55,11 @@ cs2voice extract -o ./new-directory my-demo.dem
 # Force overwrite existing files
 cs2voice extract --force my-demo.dem
 
+# Extract voice for specific players only
+cs2voice extract --players 76561198123456789,76561198987654321 my-demo.dem
+
 # Combine multiple flags
-cs2voice extract -v -o ./output -f my-demo.dem
+cs2voice extract -v -o ./output -f -p 76561198123456789 my-demo.dem
 ```
 
 ---

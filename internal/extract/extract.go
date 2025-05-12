@@ -34,7 +34,16 @@ const (
 // ExtractVoiceData parses a CS2 demo file and writes per-player WAV files containing voice data.
 // The outputDir parameter specifies where to save the extracted files.
 // When forceOverwrite is false, the function will not overwrite existing files.
-func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool) error {
+// If playerIDs is provided, only extracts voice data for those specific players.
+func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs []string) error {
+	// Convert playerIDs slice to a map for O(1) lookups
+	playerFilter := make(map[string]bool)
+	for _, id := range playerIDs {
+		playerFilter[id] = true
+	}
+
+	// Track which requested players were found
+	foundPlayers := make(map[string]bool)
 	voiceDataPerPlayer := map[string][][]byte{}
 
 	slog.Debug("Opening demo file", "path", demoPath)
@@ -68,6 +77,17 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool) error {
 	slog.Debug("Found players with voice data", "count", len(voiceDataPerPlayer))
 
 	for playerId, voiceData := range voiceDataPerPlayer {
+		// Apply player filter if provided
+		if len(playerFilter) > 0 && !playerFilter[playerId] {
+			slog.Debug("Skipping player (not in filter)", "player", playerId)
+			continue
+		}
+
+		// Mark this player as found if it was in the filter
+		if playerFilter[playerId] {
+			foundPlayers[playerId] = true
+		}
+
 		wavFilePath := filepath.Join(outputDir, fmt.Sprintf("%s.wav", playerId))
 
 		// Check if file already exists and respect forceOverwrite flag
@@ -99,6 +119,21 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool) error {
 	}
 
 	defer parser.Close()
+
+	// Log information about player filter results
+	if len(playerFilter) > 0 {
+		slog.Debug("Player filter results", "requested", len(playerFilter), "found", len(foundPlayers))
+
+		// Check if any requested players were not found
+		if len(foundPlayers) < len(playerFilter) {
+			for id := range playerFilter {
+				if !foundPlayers[id] {
+					slog.Warn("Requested player not found in demo", "player", id)
+				}
+			}
+		}
+	}
+
 	slog.Debug("Extraction complete for demo file", "path", demoPath)
 	return nil
 }
