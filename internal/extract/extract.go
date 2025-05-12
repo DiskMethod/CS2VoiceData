@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -33,15 +34,135 @@ const (
 	intPCMMaxValue = 2147483647
 )
 
+// Common error types for the extraction process
+var (
+	// ErrNoVoiceData is returned when no voice data is found in the demo
+	ErrNoVoiceData = errors.New("no voice data found in demo")
+
+	// ErrInvalidFormat is returned when an unsupported format is specified
+	ErrInvalidFormat = errors.New("invalid audio format")
+
+	// ErrFFMPEGNotFound is returned when ffmpeg is not available for conversion
+	ErrFFMPEGNotFound = errors.New("ffmpeg not found")
+
+	// ErrOutputDirNotWritable is returned when the output directory cannot be written to
+	ErrOutputDirNotWritable = errors.New("output directory is not writable")
+
+	// supportedFormats is the list of audio formats supported by this tool
+	supportedFormats = []string{"wav", "mp3", "ogg", "flac", "aac", "m4a"}
+)
+
+// ExtractOptions contains all configuration options for the voice data extraction process.
+type ExtractOptions struct {
+	// DemoPath is the path to the CS2 demo file
+	DemoPath string
+
+	// OutputDir is the directory where extracted audio files will be saved
+	OutputDir string
+
+	// ForceOverwrite determines whether existing files should be overwritten
+	ForceOverwrite bool
+
+	// PlayerIDs is an optional slice of SteamID64s to filter by
+	// If empty, all players' voice data will be extracted
+	PlayerIDs []string
+
+	// Format specifies the output audio format (wav, mp3, ogg, etc.)
+	Format string
+}
+
+// validateFormat checks if the given format is supported.
+// Returns nil if valid, or an error with suggestions otherwise.
+func validateFormat(format string) error {
+	for _, f := range supportedFormats {
+		if f == format {
+			return nil
+		}
+	}
+	return fmt.Errorf("%w: '%s' (supported formats: %s)",
+		ErrInvalidFormat, format, strings.Join(supportedFormats, ", "))
+}
+
+// sanitizeFilename removes or replaces characters that are unsafe for filenames across platforms.
+// This ensures generated filenames are valid on various operating systems.
+func sanitizeFilename(name string) string {
+	// Replace unsafe characters with underscores
+	re := regexp.MustCompile(`[<>:"/\\|?*]`)
+	sanitized := re.ReplaceAllString(name, "_")
+
+	// Trim leading/trailing periods and spaces which can cause issues
+	sanitized = strings.Trim(sanitized, " .")
+
+	// If the sanitization process results in an empty string, provide a fallback
+	if sanitized == "" {
+		return "player"
+	}
+
+	return sanitized
+}
+
+// checkOutputDirectory verifies that the output directory exists and is writable.
+// If the directory doesn't exist, it attempts to create it.
+func checkOutputDirectory(dir string) error {
+	// Check if directory exists
+	info, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Try to create the directory
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return fmt.Errorf("failed to create output directory: %w", err)
+			}
+			return nil
+		}
+		return fmt.Errorf("failed to access output directory: %w", err)
+	}
+
+	// Check if it's a directory
+	if !info.IsDir() {
+		return fmt.Errorf("output path exists but is not a directory: %s", dir)
+	}
+
+	// Check if it's writable by creating and immediately removing a test file
+	testFile := filepath.Join(dir, ".cs2voice-write-test")
+	if err := os.WriteFile(testFile, []byte{}, 0644); err != nil {
+		return fmt.Errorf("output directory is not writable: %w", err)
+	}
+	os.Remove(testFile)
+
+	return nil
+}
+
 // ExtractVoiceData parses a CS2 demo file and writes per-player audio files containing voice data.
-// The outputDir parameter specifies where to save the extracted files.
-// When forceOverwrite is false, the function will not overwrite existing files.
-// If playerIDs is provided, only extracts voice data for those specific players.
-// The format parameter specifies the desired output audio format (wav, mp3, etc.).
-func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs []string, format string) error {
+// Uses the provided options to configure the extraction process.
+func ExtractVoiceData(opts ExtractOptions) error {
+	// Validate required fields
+	if opts.DemoPath == "" {
+		return fmt.Errorf("demo path is required")
+	}
+
+	if opts.OutputDir == "" {
+		// Default to current directory if not specified
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+		opts.OutputDir = cwd
+	}
+
+	// Default to WAV if no format specified
+	if opts.Format == "" {
+		opts.Format = "wav"
+	} else {
+		// Validate format
+		opts.Format = strings.ToLower(opts.Format)
+		if err := validateFormat(opts.Format); err != nil {
+			return err
+		}
+	}
+
 	// Convert playerIDs slice to a map for O(1) lookups
 	playerFilter := make(map[string]bool)
-	for _, id := range playerIDs {
+	for _, id := range opts.PlayerIDs {
 		playerFilter[id] = true
 	}
 
@@ -49,10 +170,10 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 	foundPlayers := make(map[string]bool)
 	voiceDataPerPlayer := map[string][][]byte{}
 
-	slog.Debug("Opening demo file", "path", demoPath)
-	file, err := os.Open(demoPath)
+	slog.Debug("Opening demo file", "path", opts.DemoPath)
+	file, err := os.Open(opts.DemoPath)
 	if err != nil {
-		return fmt.Errorf("failed to open demo file '%s': %w", demoPath, err)
+		return fmt.Errorf("failed to open demo file '%s': %w", opts.DemoPath, err)
 	}
 	defer file.Close()
 
@@ -79,6 +200,16 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 
 	slog.Debug("Found players with voice data", "count", len(voiceDataPerPlayer))
 
+	// Check if no voice data was found
+	if len(voiceDataPerPlayer) == 0 {
+		return ErrNoVoiceData
+	}
+
+	// Check if the output directory exists and is writable
+	if err := checkOutputDirectory(opts.OutputDir); err != nil {
+		return fmt.Errorf("output directory issue: %w", err)
+	}
+
 	// Create a temporary directory for intermediate WAV files
 	tempDir, err := os.MkdirTemp("", "cs2voice-tmp-*")
 	if err != nil {
@@ -101,12 +232,25 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 			foundPlayers[playerId] = true
 		}
 
-		// Set up temporary and final paths
-		tempWavPath := filepath.Join(tempDir, fmt.Sprintf("%s.wav", playerId))
-		finalOutputPath := filepath.Join(outputDir, fmt.Sprintf("%s.%s", playerId, format))
+		// Sanitize the player ID for filename safety
+		safePlayerId := sanitizeFilename(playerId)
 
-		// Check if file already exists and respect forceOverwrite flag
-		if _, err := os.Stat(finalOutputPath); err == nil && !forceOverwrite {
+		// Set up paths
+		var tempWavPath, finalOutputPath string
+
+		// For WAV format, optimize by writing directly to the final path
+		if opts.Format == "wav" {
+			// Write directly to the output directory, skipping the temporary file
+			finalOutputPath = filepath.Join(opts.OutputDir, fmt.Sprintf("%s.wav", safePlayerId))
+			tempWavPath = finalOutputPath // Both point to the same location
+		} else {
+			// For other formats, use the temporary directory for WAV files
+			tempWavPath = filepath.Join(tempDir, fmt.Sprintf("%s.wav", safePlayerId))
+			finalOutputPath = filepath.Join(opts.OutputDir, fmt.Sprintf("%s.%s", safePlayerId, opts.Format))
+		}
+
+		// Check if file already exists and respect ForceOverwrite flag
+		if _, err := os.Stat(finalOutputPath); err == nil && !opts.ForceOverwrite {
 			slog.Warn("File already exists, skipping", "path", finalOutputPath)
 			continue
 		} else if !os.IsNotExist(err) && err != nil {
@@ -116,7 +260,7 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 		}
 
 		var err error
-		// Generate the WAV file in the temporary directory
+		// Generate the WAV file (either temporary or final for WAV format)
 		if voiceDataFormat == "VOICEDATA_FORMAT_OPUS" {
 			err = opusToWav(voiceData, tempWavPath)
 			if err != nil {
@@ -134,30 +278,27 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 			continue
 		}
 
-		// For WAV format, copy from temp to output directory
-		if format == "wav" {
-			// Read the temporary file
-			wavData, err := os.ReadFile(tempWavPath)
-			if err != nil {
-				slog.Error("Failed to read temporary WAV file", "path", tempWavPath, "error", err)
-				continue
-			}
+		// For WAV format, optimize by writing directly to the final path
+		if opts.Format == "wav" {
+			// Since we know the output format is WAV, skip the temporary file.
+			// Write directly to the output directory
+			finalOutputPath = filepath.Join(opts.OutputDir, fmt.Sprintf("%s.wav", safePlayerId))
 
-			// Write to the final location
-			err = os.WriteFile(finalOutputPath, wavData, 0644)
-			if err != nil {
-				slog.Error("Failed to write WAV file to final location", "path", finalOutputPath, "error", err)
-				continue
-			}
+			// For direct WAV output, overwrite tempWavPath to point to our final destination
+			tempWavPath = finalOutputPath
 
+			// The remaining code will now write directly to the final location
+			// And we'll skip the conversion step since we continue below
+
+			// After the generate step completes, we're done - no need for conversion
 			slog.Debug("Audio file created successfully", "player", playerId, "path", finalOutputPath)
 			continue
 		}
 
 		// Convert to the desired format if needed
-		err = convertAudioToFormat(tempWavPath, finalOutputPath, format)
+		err = convertAudioToFormat(tempWavPath, finalOutputPath, opts.Format)
 		if err != nil {
-			slog.Error("Failed to convert audio format", "player", playerId, "format", format, "error", err)
+			slog.Error("Failed to convert audio format", "player", playerId, "format", opts.Format, "error", err)
 			continue
 		}
 
@@ -180,7 +321,10 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 		}
 	}
 
-	slog.Debug("Extraction complete for demo file", "path", demoPath)
+	slog.Debug("Extraction complete",
+		"demo", opts.DemoPath,
+		"outputDir", opts.OutputDir,
+		"format", opts.Format)
 	return nil
 }
 
@@ -189,7 +333,7 @@ func ExtractVoiceData(demoPath, outputDir string, forceOverwrite bool, playerIDs
 func convertAudioToFormat(wavPath string, outputPath string, format string) error {
 	// Check if ffmpeg is available
 	if _, err := exec.LookPath("ffmpeg"); err != nil {
-		return fmt.Errorf("ffmpeg not found: %w", err)
+		return fmt.Errorf("%w: %v", ErrFFMPEGNotFound, err)
 	}
 
 	// Build the ffmpeg command

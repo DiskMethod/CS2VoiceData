@@ -88,7 +88,17 @@ var extractCmd = &cobra.Command{
 				format, strings.Join(supportedFormats, ", "))
 		}
 
-		if err := extract.ExtractVoiceData(demoPath, Opts.AbsOutputDir, Opts.ForceOverwrite, playerIDs, format); err != nil {
+		// Create extract options from command-line arguments
+		options := extract.ExtractOptions{
+			DemoPath:       demoPath,
+			OutputDir:      Opts.AbsOutputDir,
+			ForceOverwrite: Opts.ForceOverwrite,
+			PlayerIDs:      playerIDs,
+			Format:         format,
+		}
+
+		// Extract voice data with the configured options
+		if err := extract.ExtractVoiceData(options); err != nil {
 			return err
 		}
 
