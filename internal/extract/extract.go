@@ -338,11 +338,11 @@ func convertAudioToFormat(wavPath string, outputPath string, format string) erro
 
 	// Build the ffmpeg command
 	cmd := exec.Command("ffmpeg",
-		"-i", wavPath,           // Input file
-		"-y",                    // Overwrite output file
-		"-loglevel", "error",    // Only show errors
-		"-hide_banner",          // Hide the banner
-		outputPath)              // Output file
+		"-i", wavPath, // Input file
+		"-y",                 // Overwrite output file
+		"-loglevel", "error", // Only show errors
+		"-hide_banner", // Hide the banner
+		outputPath)     // Output file
 
 	// Capture stderr for error reporting
 	var stderr strings.Builder
