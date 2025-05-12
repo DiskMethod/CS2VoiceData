@@ -28,6 +28,7 @@ A modular suite of CLI tools for extracting, transcribing, and analyzing player 
 All commands support the following global flags:
 
 - `-v, --verbose`: Enable verbose logging (shows additional debug information)
+- `-o, --output-dir`: Directory to save output files (default: current directory)
 
 Examples:
 
@@ -35,8 +36,14 @@ Examples:
 # Run extraction with verbose logging
 cs2voice extract --verbose my-demo.dem
 
-# Short form also works
-cs2voice extract -v my-demo.demo
+# Save extracted files to a specific directory
+cs2voice extract --output-dir /path/to/output my-demo.dem
+
+# Short forms work too
+cs2voice extract -v -o /path/to/output my-demo.dem
+
+# Directory will be created if it doesn't exist
+cs2voice extract -o ./new-directory my-demo.dem
 ```
 
 ---

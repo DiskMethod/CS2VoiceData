@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/DiskMethod/cs2-voice-tools/internal/decoder"
@@ -31,7 +32,8 @@ const (
 )
 
 // ExtractVoiceData parses a CS2 demo file and writes per-player WAV files containing voice data.
-func ExtractVoiceData(demoPath string) error {
+// The outputDir parameter specifies where to save the extracted files.
+func ExtractVoiceData(demoPath, outputDir string) error {
 	voiceDataPerPlayer := map[string][][]byte{}
 
 	slog.Debug("Opening demo file", "path", demoPath)
@@ -65,7 +67,7 @@ func ExtractVoiceData(demoPath string) error {
 	slog.Debug("Found players with voice data", "count", len(voiceDataPerPlayer))
 
 	for playerId, voiceData := range voiceDataPerPlayer {
-		wavFilePath := fmt.Sprintf("%s.wav", playerId)
+		wavFilePath := filepath.Join(outputDir, fmt.Sprintf("%s.wav", playerId))
 		if format == "VOICEDATA_FORMAT_OPUS" {
 			err = opusToWav(voiceData, wavFilePath)
 			if err != nil {
