@@ -52,14 +52,15 @@ func ExtractVoiceData(demoPath string) error {
 	})
 
 	err = parser.ParseToEnd()
-	if errors.Is(err, dem.ErrCancelled) {
-		log.Println("Parsing was cancelled.")
-	} else if errors.Is(err, dem.ErrUnexpectedEndOfDemo) {
-		log.Println("Demo file ended unexpectedly (may be corrupt).")
-	} else if errors.Is(err, dem.ErrInvalidFileType) {
-		log.Println("Invalid demo file type.")
-	} else if err != nil {
-		log.Printf("Unknown error parsing demo: %v", err)
+	if err != nil {
+		if errors.Is(err, dem.ErrCancelled) {
+			return fmt.Errorf("parsing was cancelled: %w", err)
+		} else if errors.Is(err, dem.ErrUnexpectedEndOfDemo) {
+			return fmt.Errorf("demo file ended unexpectedly (may be corrupt): %w", err)
+		} else if errors.Is(err, dem.ErrInvalidFileType) {
+			return fmt.Errorf("invalid demo file type: %w", err)
+		}
+		return fmt.Errorf("unknown error parsing demo: %w", err)
 	}
 
 	logutil.VLog("Found %d players with voice data", len(voiceDataPerPlayer))
@@ -133,7 +134,7 @@ func convertAudioDataToWavFiles(payloads [][]byte, fileName string) error {
 
 // opusToWav decodes Opus-format voice data and writes the result to a WAV file.
 // Returns an error if decoding or file writing fails.
-func opusToWav(data [][]byte, wavName string) (err error) {
+func opusToWav(data [][]byte, wavName string) error {
 	opusDecoder, err := decoder.NewDecoder(defaultOpusSampleRate, defaultNumChannels)
 	if err != nil {
 		return fmt.Errorf("failed to initialize OpusDecoder: %w", err)

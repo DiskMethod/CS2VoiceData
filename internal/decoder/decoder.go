@@ -125,14 +125,14 @@ func (d *OpusDecoder) decodeLoss(samples uint16) ([]float32, error) {
 }
 
 // NewDecoder returns a new opus.Decoder for the given sample rate and channel count.
-func NewDecoder(sampleRate, channels int) (decoder *opus.Decoder, err error) {
-	decoder, err = opus.NewDecoder(sampleRate, channels)
-	return
+func NewDecoder(sampleRate, channels int) (*opus.Decoder, error) {
+	decoder, err := opus.NewDecoder(sampleRate, channels)
+	return decoder, err
 }
 
 // Decode decodes Opus-encoded data using the provided opus.Decoder and returns PCM float32 samples.
-func Decode(decoder *opus.Decoder, data []byte) (pcm []float32, err error) {
-	pcm = make([]float32, 1024)
+func Decode(decoder *opus.Decoder, data []byte) ([]float32, error) {
+	pcm := make([]float32, 1024)
 
 	nlen, err := decoder.DecodeFloat32(data, pcm)
 	if err != nil {
