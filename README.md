@@ -1,6 +1,6 @@
 # cs2-voice-tools
 
-A modular suite of CLI tools for extracting, transcribing, and analyzing player voice data from CS2 demo files. (Compression is now handled directly by the extraction tool.)
+A modular suite of CLI tools for extracting, transcribing, and analyzing player voice data from CS2 demo files. The tool can extract voice data to various audio formats and filter by specific players.
 
 **Forked from:** [DandrewsDev/CS2VoiceData](https://github.com/DandrewsDev/CS2VoiceData)
 
@@ -9,7 +9,11 @@ A modular suite of CLI tools for extracting, transcribing, and analyzing player 
 ## Features
 
 - Modular CLI tools for each stage of CS2 voice data processing:
-  - Extraction (`cs2voice extract`): Extracts per-player voice data from CS2 demos with support for direct output to various formats (WAV, FLAC, etc.) and user-selectable audio quality (sample rate, bit depth, etc.)
+  - Extraction (`cs2voice extract`): Extracts per-player voice data from CS2 demos with support for:
+    - Multiple output formats (WAV, MP3, OGG, FLAC, AAC, M4A)
+    - Player filtering by SteamID64
+    - Safe filename handling for cross-platform compatibility
+    - Structured error handling with specific error types
   - Transcription (`cs2voice transcribe` - planned)
   - Analysis (`cs2voice analyze` - planned)
   - Unified pipeline (`cs2voice pipeline` - planned)
@@ -19,7 +23,7 @@ A modular suite of CLI tools for extracting, transcribing, and analyzing player 
 ## Installation
 
 - Requires Go 1.23+ and dependencies listed in `go.mod`.
-- Some tools may require additional system libraries (e.g., libopus, ffmpeg). See each tool's README for details.
+- Requires ffmpeg installed and available in PATH when using formats other than WAV.
 
 ## Usage
 
@@ -70,6 +74,20 @@ cs2voice extract --format flac my-demo.dem
 # Combine multiple flags
 cs2voice extract -v -o ./output -f -p 76561198123456789 -t mp3 my-demo.dem
 ```
+
+---
+
+## Troubleshooting
+
+Common issues and solutions:
+
+- **No voice data found in demo**: Some demos may not contain voice data. Try another demo file.
+- **ffmpeg not found**: Install ffmpeg when using formats other than WAV.
+- **Invalid SteamID64 format**: Ensure player IDs are in the correct format (17-digit numbers starting with 7656).
+- **Output directory is not writable**: Check permissions on the output directory.
+- **Demo file ended unexpectedly**: The demo file might be corrupt or incomplete.
+
+For more detailed error information, run with the `--verbose` flag.
 
 ---
 
