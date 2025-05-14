@@ -34,6 +34,14 @@ const (
 	intPCMMaxValue = 2147483647
 )
 
+// File permission constants
+const (
+	// DirPermissions defines standard permissions for directories (0755 = rwxr-xr-x)
+	DirPermissions = 0755
+	// FilePermissions defines standard permissions for files (0644 = rw-r--r--)
+	FilePermissions = 0644
+)
+
 // Common error types for the extraction process
 var (
 	// ErrNoVoiceData is returned when no voice data is found in the demo
@@ -50,7 +58,23 @@ var (
 
 	// supportedFormats is the list of audio formats supported by this tool
 	supportedFormats = []string{"wav", "mp3", "ogg", "flac", "aac", "m4a"}
+
+	// supportedFormatsMap provides O(1) lookup for format validation
+	supportedFormatsMap = map[string]bool{
+		"wav":  true,
+		"mp3":  true,
+		"ogg":  true,
+		"flac": true,
+		"aac":  true,
+		"m4a":  true,
+	}
 )
+
+// GetSupportedFormats returns the list of audio formats supported by this tool.
+// Used by both internal code and CLI commands to ensure consistency.
+func GetSupportedFormats() []string {
+	return supportedFormats
+}
 
 // ExtractOptions contains all configuration options for the voice data extraction process.
 type ExtractOptions struct {
@@ -71,13 +95,11 @@ type ExtractOptions struct {
 	Format string
 }
 
-// validateFormat checks if the given format is supported.
+// validateFormat checks if the given format is supported using O(1) map lookup.
 // Returns nil if valid, or an error with suggestions otherwise.
 func validateFormat(format string) error {
-	for _, f := range supportedFormats {
-		if f == format {
-			return nil
-		}
+	if supportedFormatsMap[format] {
+		return nil
 	}
 	return fmt.Errorf("%w: '%s' (supported formats: %s)",
 		ErrInvalidFormat, format, strings.Join(supportedFormats, ", "))
@@ -109,7 +131,7 @@ func checkOutputDirectory(dir string) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Try to create the directory
-			if err := os.MkdirAll(dir, 0755); err != nil {
+			if err := os.MkdirAll(dir, DirPermissions); err != nil {
 				return fmt.Errorf("failed to create output directory: %w", err)
 			}
 			return nil
@@ -124,7 +146,7 @@ func checkOutputDirectory(dir string) error {
 
 	// Check if it's writable by creating and immediately removing a test file
 	testFile := filepath.Join(dir, ".cs2voice-write-test")
-	if err := os.WriteFile(testFile, []byte{}, 0644); err != nil {
+	if err := os.WriteFile(testFile, []byte{}, FilePermissions); err != nil {
 		return fmt.Errorf("output directory is not writable: %w", err)
 	}
 	os.Remove(testFile)
@@ -278,19 +300,8 @@ func ExtractVoiceData(opts ExtractOptions) error {
 			continue
 		}
 
-		// For WAV format, optimize by writing directly to the final path
+		// If format is wav, we've already written the final file - no conversion needed
 		if opts.Format == "wav" {
-			// Since we know the output format is WAV, skip the temporary file.
-			// Write directly to the output directory
-			finalOutputPath = filepath.Join(opts.OutputDir, fmt.Sprintf("%s.wav", safePlayerId))
-
-			// For direct WAV output, overwrite tempWavPath to point to our final destination
-			tempWavPath = finalOutputPath
-
-			// The remaining code will now write directly to the final location
-			// And we'll skip the conversion step since we continue below
-
-			// After the generate step completes, we're done - no need for conversion
 			slog.Debug("Audio file created successfully", "player", playerId, "path", finalOutputPath)
 			continue
 		}

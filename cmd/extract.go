@@ -23,9 +23,6 @@ var (
 	// steamID64Regex is the regular expression for validating SteamID64 format
 	// SteamID64 should be a 17-digit number starting with 7656
 	steamID64Regex = regexp.MustCompile(`^7656\d{13}$`)
-
-	// supportedFormats is the list of audio formats supported by this tool
-	supportedFormats = []string{"wav", "mp3", "ogg", "flac", "aac", "m4a"}
 )
 
 // extractCmd represents the extract command
@@ -75,7 +72,7 @@ var extractCmd = &cobra.Command{
 			isFormatValid = true
 		} else {
 			// Check if the format is supported
-			for _, supportedFormat := range supportedFormats {
+			for _, supportedFormat := range extract.GetSupportedFormats() {
 				if format == supportedFormat {
 					isFormatValid = true
 					break
@@ -85,7 +82,7 @@ var extractCmd = &cobra.Command{
 
 		if !isFormatValid {
 			return fmt.Errorf("unsupported format: %s (supported formats: %s)",
-				format, strings.Join(supportedFormats, ", "))
+				format, strings.Join(extract.GetSupportedFormats(), ", "))
 		}
 
 		// Create extract options from command-line arguments
@@ -120,5 +117,5 @@ func init() {
 	// Add command-specific flags
 	extractCmd.Flags().StringVarP(&playerFilter, "players", "p", "", "filter to specific players by steamID64 (comma-separated list)")
 	extractCmd.Flags().StringVarP(&formatOption, "format", "t", "wav",
-		fmt.Sprintf("output audio format (%s)", strings.Join(supportedFormats, ", ")))
+		fmt.Sprintf("output audio format (%s)", strings.Join(extract.GetSupportedFormats(), ", ")))
 }

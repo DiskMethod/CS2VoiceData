@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // Options holds global configuration for all commands
@@ -32,12 +33,14 @@ type Options struct {
 // Opts is the global options instance used by all commands
 var Opts Options
 
-// Verbose controls whether debug logging is enabled globally (for backward compatibility)
-var Verbose bool
+// verbose is a package-private variable for backward compatibility with direct flag binding
+// All new code should use Opts.Verbose or IsVerbose() instead
+var verbose bool
 
-// syncVerbose keeps the legacy Verbose variable in sync with Opts.Verbose
-func syncVerbose() {
-	Verbose = Opts.Verbose
+// IsVerbose returns whether verbose mode is enabled
+// Use this function instead of accessing the verbose variable directly
+func IsVerbose() bool {
+	return Opts.Verbose
 }
 
 // resolveOutputDir ensures the output directory is ready for use
@@ -65,7 +68,7 @@ func resolveOutputDir() error {
 	}
 
 	// Create the directory if it doesn't exist
-	if err := os.MkdirAll(Opts.AbsOutputDir, 0755); err != nil {
+	if err := os.MkdirAll(Opts.AbsOutputDir, 0755); err != nil { // Using 0755 (rwxr-xr-x) for directory permissions
 		return err
 	}
 
@@ -78,9 +81,6 @@ var Logger *slog.Logger
 // SetLogOutput sets the output writer for the logger
 // Useful for testing or redirecting logs
 func SetLogOutput(w io.Writer) {
-	// Sync before using Opts
-	syncVerbose()
-
 	level := slog.LevelInfo
 	if Opts.Verbose {
 		level = slog.LevelDebug
@@ -101,9 +101,6 @@ var rootCmd = &cobra.Command{
 	Long: `cs2-voice-tools is a single binary that provides sub-commands to
 extract, transcribe, and analyse player voice data from CS2 demo files.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// Sync the legacy Verbose variable with the options struct
-		syncVerbose()
-
 		// Set up logging based on verbose flag
 		logLevel := slog.LevelInfo
 		if Opts.Verbose {
@@ -137,14 +134,16 @@ func Execute() {
 }
 
 func init() {
-	// Global / persistent flags.
-	// For backward compatibility: we register Verbose directly but also sync with Opts.Verbose
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "enable verbose output")
-
-	// In the future, register directly with the Options struct for new flags
+	// Register flags directly with the Options struct
+	rootCmd.PersistentFlags().BoolVarP(&Opts.Verbose, "verbose", "v", false, "enable verbose output")
 	rootCmd.PersistentFlags().StringVarP(&Opts.OutputDir, "output-dir", "o", "", "directory to save output files (default: current directory)")
 	rootCmd.PersistentFlags().BoolVarP(&Opts.ForceOverwrite, "force", "f", false, "force overwrite existing files")
 
-	// Keep options in sync
-	Opts.Verbose = Verbose
+	// For backward compatibility with code that might access the verbose variable directly
+	// We set up a hook to keep it synchronized when the flag changes
+	rootCmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+		if f.Name == "verbose" && f.Changed {
+			verbose = Opts.Verbose
+		}
+	})
 }
